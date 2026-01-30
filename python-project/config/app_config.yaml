@@ -2,3 +2,4 @@ app:
   name: demo-python-app
   environment: dev
   version: 1.0
+  
