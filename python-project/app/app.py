@@ -1,11 +1,10 @@
-import yaml
- 
-def load_config():
-    with open("config/app_config.yaml", "r") as file:
-        config = yaml.safe_load(file)
-    return config
- 
-if __name__ == "__main__":
-    config = load_config()
-    print("Application Name:", config["app"]["name"])
-    print("Environment:", config["app"]["environment"])
+from flask import Flask, render_template
+app = Flask(__name__)
+
+@app.route('/')
+def hello_world():
+    return render_template('index.html')
+
+@app.route('/health')
+def health():
+    return render_template('health.html')
