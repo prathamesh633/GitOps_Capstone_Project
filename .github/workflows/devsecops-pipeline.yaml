@@ -1,0 +1,63 @@
+name: DevSecOps CI Pipeline
+
+on:
+  push:
+    branches: [ "main", "feature/*" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  security-scans:
+    name: Security Scans
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Required for advanced scanners like TruffleHog
+
+      # 1. Linting and Secret Detection
+      - name: TruffleHog Secret Scanning
+        uses: trufflesecurity/trufflehog@main
+        with:
+          path: ./
+          base: ""
+          head: ${{ github.ref_name }}
+          extra_args: --debug --only-verified
+
+      # 2. SAST Scan (Python)
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - name: Install Bandit SAST
+        run: pip install bandit
+
+      - name: Run Bandit SAST Scan
+        run: |
+          # Fails the build if High severity issues are found
+          bandit -r python-project/ --severity-level high --confidence-level high -ll -ii
+
+      # 3. Dependency Vulnerability Scan
+      - name: Run Trivy Vulnerability Scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          scan-ref: './python-project'
+          format: 'table'
+          scanners: 'vuln,secret,misconfig'
+          # Policy Check: Deny deploy if CRITICAL vulnerabilities are found
+          exit-code: '1'
+          ignore-unfixed: true
+          vuln-type: 'os,library'
+          severity: 'CRITICAL,HIGH'
+
+      # 4. IaC Security Scan
+      - name: Run Checkov IaC Scan
+        uses: bridgecrewio/checkov-action@master
+        with:
+          directory: python-project/
+          framework: dockerfile
+          soft_fail: false # Will fail pipeline if IaC misconfigurations are detected
