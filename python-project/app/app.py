@@ -1,11 +1,27 @@
+import os
 import yaml
- 
+from flask import Flask, render_template
+
+app = Flask(__name__, template_folder="../templates")
+
+
 def load_config():
-    with open("config/app_config.yaml", "r") as file:
+    config_path = os.path.join(os.path.dirname(__file__), "../config/app_config.yaml")
+    with open(config_path, "r") as file:
         config = yaml.safe_load(file)
     return config
- 
-if __name__ == "__main__":
+
+
+@app.route("/")
+def index():
     config = load_config()
-    print("Application Name:", config["app"]["name"])
-    print("Environment:", config["app"]["environment"])
+    return render_template("index.html", config=config)
+
+
+@app.route("/health")
+def health():
+    return render_template("health.html")
+
+
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=5000)
