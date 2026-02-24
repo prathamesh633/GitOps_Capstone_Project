@@ -38,7 +38,7 @@ jobs:
       - name: Run Bandit SAST Scan
         run: |
           # Fails the build if High severity issues are found
-          bandit -r python-project/ --severity-level high --confidence-level high -ll -ii
+          bandit -r python-project/ -ll -ii
 
       # 3. Dependency Vulnerability Scan
       - name: Run Trivy Vulnerability Scanner
